@@ -1,3 +1,5 @@
+import { MongoClient, ObjectId } from 'mongodb';
+
 import MeetupDetail from '../../components/meetups/MeetupDetail';
 
 function MeetupDetails(props) {
@@ -6,34 +8,37 @@ function MeetupDetails(props) {
 }
 
 export async function getStaticPaths() {
+	const client = await MongoClient.connect('DB_URL');
+	const db = client.db();
+
+	const meetupsColletion = db.collection('meetups');
+	const meetups = await meetupsColletion.find({}, { _id: 1 }).toArray();
+	client.close();
+
 	return {
 		fallback: false,
-		paths: [
-			{
-				params: {
-					meetupId: 'm1',
-				},
-			},
-			{
-				params: {
-					meetupId: 'm2',
-				},
-			},
-		],
+		paths: meetups.map((meetup) => ({
+			params: { meetupId: meetup._id.toString() },
+		})),
 	};
 }
 
 export async function getStaticProps(context) {
 	const { meetupId } = context.params;
+	const client = await MongoClient.connect('DB_URL');
+	const db = client.db();
 
+	const meetupsColletion = db.collection('meetups');
+	const selectedMeetup = await meetupsColletion.findOne({ _id: ObjectId(meetupId) });
+	client.close();
 	return {
 		props: {
 			meetupData: {
-				id: meetupId,
-				image: 'https://images.unsplash.com/photo-1546436836-07a91091f160?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1474&q=80',
-				title: 'First Meetup',
-				address: 'Some address 5, 12345 Some City',
-				description: 'This is a first meetup!',
+				id: selectedMeetup._id.toString(),
+				title: selectedMeetup.title,
+				image: selectedMeetup.image,
+				address: selectedMeetup.address,
+				description: selectedMeetup.description,
 			},
 		},
 	};
