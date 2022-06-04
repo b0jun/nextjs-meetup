@@ -1,9 +1,21 @@
+import Head from 'next/head';
 import { MongoClient } from 'mongodb'; //getStaticProps이나 getServerSideProps 에서만 사용되는 경우 클라리언트 측 번들에 포함되지 않음
 
 import MeetupList from '../components/meetups/MeetupList';
 
 function HomePage(props) {
-	return <MeetupList meetups={props.meetups} />;
+	return (
+		<>
+			<Head>
+				<title>NextJS Meetups</title>
+				<meta
+					name="description"
+					content="Browse a huge list of highly active React meetups!"
+				/>
+			</Head>
+			<MeetupList meetups={props.meetups} />
+		</>
+	);
 }
 export async function getStaticProps() {
 	const client = await MongoClient.connect('DB_URL');
