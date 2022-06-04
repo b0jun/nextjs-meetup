@@ -1,30 +1,25 @@
-import MeetupList from '../components/meetups/MeetupList';
+import { MongoClient } from 'mongodb'; //getStaticProps이나 getServerSideProps 에서만 사용되는 경우 클라리언트 측 번들에 포함되지 않음
 
-const DUMMY_MEETUPS = [
-	{
-		id: 'm1',
-		title: 'A First Meetup',
-		image: 'https://images.unsplash.com/photo-1546436836-07a91091f160?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1474&q=80',
-		address: 'Some address 5, 12345 Some City',
-		description: 'This is a first meetup!',
-	},
-	{
-		id: 'm2',
-		title: 'A Second Meetup',
-		image: 'https://images.unsplash.com/photo-1566821526321-d17764cf4474?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80',
-		address: 'Some address 10, 12345 Some City',
-		description: 'This is a second meetup!',
-	},
-];
+import MeetupList from '../components/meetups/MeetupList';
 
 function HomePage(props) {
 	return <MeetupList meetups={props.meetups} />;
 }
 export async function getStaticProps() {
-	// fetch data from an API
+	const client = await MongoClient.connect('DB_URL');
+	const db = client.db();
+
+	const meetupsColletion = db.collection('meetups');
+	const meetups = await meetupsColletion.find().toArray();
+	client.close();
 	return {
 		props: {
-			meetups: DUMMY_MEETUPS,
+			meetups: meetups.map((meetup) => ({
+				title: meetup.title,
+				address: meetup.address,
+				image: meetup.image,
+				id: meetup._id.toString(),
+			})),
 		},
 		revalidate: 10,
 	};
